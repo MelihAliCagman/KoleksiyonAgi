@@ -19,6 +19,7 @@
     <div class="brand-logo">✨ Koleksiyon Ağı</div>
     <h5 class="text-center mb-4">Aramıza Katılın</h5>
 
+    <div th:if="${param.error}" class="alert alert-danger py-2 small">Bu kullanıcı adı zaten alınmış.</div>
     <form th:action="@{/register}" method="post">
         <div class="mb-3">
             <label class="form-label small text-muted">Kullanıcı Adı</label>

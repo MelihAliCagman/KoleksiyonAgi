@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
@@ -98,24 +99,43 @@ public class ItemController {
     public String showItemDetails(@PathVariable Long id, Model model) {
         Item item = itemService.getItemById(id);
         model.addAttribute("item", item);
+        model.addAttribute("bids", itemService.getBidsForItem(id));
         model.addAttribute("currentUser", getLoggedInUser());
         return "item-details";
     }
 
     // 6. TEKLİF VERME
     @PostMapping("/bid/{id}")
-    public String placeBid(@PathVariable Long id, @RequestParam("amount") Double amount) {
-        itemService.placeBid(id, amount, getLoggedInUser());
+    public String placeBid(@PathVariable Long id, @RequestParam("amount") Double amount,
+                           RedirectAttributes redirect) {
+        try {
+            itemService.placeBid(id, amount, getLoggedInUser());
+            redirect.addFlashAttribute("success", "Teklifiniz alındı.");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/items/" + id;
     }
 
-    // 7. SİLME (Admin veya Sahibi silebilir)
-    @GetMapping("/delete/{id}")
+    // 6b. SATIŞI KAPATMA (sadece ürün sahibi, %10 komisyon kesilir)
+    @PostMapping("/close/{id}")
+    public String closeAuction(@PathVariable Long id, RedirectAttributes redirect) {
+        try {
+            itemService.closeAuction(id, getLoggedInUser().getUsername());
+            redirect.addFlashAttribute("success", "Satış tamamlandı.");
+        } catch (IllegalStateException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/items/" + id;
+    }
+
+    // 7. SİLME (Admin veya sahibi silebilir) - durum değiştiren işlem olduğu için POST
+    @PostMapping("/delete/{id}")
     public String deleteItem(@PathVariable Long id) {
         Item item = itemService.getItemById(id);
         User currentUser = getLoggedInUser();
 
-        if (currentUser.getRole().equals("ROLE_ADMIN") ||
+        if ("ROLE_ADMIN".equals(currentUser.getRole()) ||
                 item.getOwner().getUsername().equals(currentUser.getUsername())) {
             itemService.deleteItem(id);
         }

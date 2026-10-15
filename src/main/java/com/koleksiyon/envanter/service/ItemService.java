@@ -1,11 +1,14 @@
 package com.koleksiyon.envanter.service;
 
+import com.koleksiyon.envanter.entity.Bid;
 import com.koleksiyon.envanter.entity.Item;
 import com.koleksiyon.envanter.entity.SystemVault;
+import com.koleksiyon.envanter.repository.BidRepository;
 import com.koleksiyon.envanter.repository.ItemRepository;
 import com.koleksiyon.envanter.repository.SystemVaultRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.koleksiyon.envanter.entity.User;
 
@@ -18,6 +21,7 @@ public class ItemService {
 
     private final ItemRepository itemRepository;
     private final SystemVaultRepository systemVaultRepository;
+    private final BidRepository bidRepository;
 
     // 1. Tüm parçaları listeleme (Read)
     public List<Item> getAllItems() {
@@ -52,6 +56,7 @@ public class ItemService {
         return itemRepository.findAll();
     }
     // SATIŞI TAMAMLAMA VE KOMİSYON KESME METODU
+    @Transactional
     public void closeAuction(Long itemId, String loggedInUsername) {
         Item item = getItemById(itemId);
 
@@ -80,16 +85,34 @@ public class ItemService {
     }
 
     // Teklif Verme Metodu
+    @Transactional
     public void placeBid(Long itemId, Double amount, User bidder) {
         Item item = getItemById(itemId);
 
+        if (!item.isForSale() || item.isSold()) {
+            throw new IllegalStateException("Bu ürün şu anda tekliflere açık değil.");
+        }
+        if (item.getOwner().getUsername().equals(bidder.getUsername())) {
+            throw new IllegalStateException("Kendi ürününüze teklif veremezsiniz.");
+        }
         // Teklifin başlangıç fiyatından ve mevcut en yüksek tekliften büyük olması gerekir
-        if (amount <= item.getStartingPrice() || (item.getCurrentHighestBid() != null && amount <= item.getCurrentHighestBid())) {
+        if (amount == null || amount <= item.getStartingPrice()
+                || (item.getCurrentHighestBid() != null && amount <= item.getCurrentHighestBid())) {
             throw new IllegalArgumentException("Teklif miktarı mevcut fiyattan yüksek olmalıdır!");
         }
 
+        Bid bid = new Bid();
+        bid.setItem(item);
+        bid.setBidder(bidder);
+        bid.setAmount(amount);
+        bidRepository.save(bid);
+
         item.setCurrentHighestBid(amount);
         itemRepository.save(item);
+    }
+
+    public List<Bid> getBidsForItem(Long itemId) {
+        return bidRepository.findByItemIdOrderByAmountDesc(itemId);
     }
 
     // Sadece satışta olanları getiren temel metot
@@ -111,10 +134,7 @@ public class ItemService {
 
     // Kullanıcının koleksiyonundaki (satılık olsun olmasın) her şeyi getirmek için
     public List<Item> getItemsByOwner(User owner) {
-        // Bunun için Repository'ye List<Item> findByOwner(User owner); eklemen gerekebilir.
-        return itemRepository.findAll().stream()
-                .filter(item -> item.getOwner().equals(owner))
-                .toList();
+        return itemRepository.findByOwner(owner);
     }
 
 }

@@ -24,7 +24,11 @@ public class AuthController {
 
     @PostMapping("/register")
     public String registerUser(@org.springframework.web.bind.annotation.ModelAttribute("user") com.koleksiyon.envanter.entity.User user) {
-        userService.saveUser(user);
+        try {
+            userService.saveUser(user);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/register?error";
+        }
         return "redirect:/login?registered=true";
     }
 }

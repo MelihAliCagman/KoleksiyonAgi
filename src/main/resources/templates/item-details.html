@@ -42,18 +42,38 @@
                 <h2 class="text-white fw-bold" th:text="${item.currentHighestBid != null ? item.currentHighestBid : item.startingPrice} + ' ₺'"></h2>
             </div>
 
+            <div th:if="${success}" class="alert alert-success py-2" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-danger py-2" th:text="${error}"></div>
+            <div th:if="${item.isSold}" class="alert alert-secondary py-2">Bu ürün satıldı.</div>
+
             <!-- Teklif Formu -->
-            <form th:if="${!item.isSold}" th:action="@{'/items/bid/' + ${item.id}}" method="post" class="d-flex gap-2 mb-5">
+            <form th:if="${!item.isSold and item.forSale and item.owner.username != currentUser.username}" th:action="@{'/items/bid/' + ${item.id}}" method="post" class="d-flex gap-2 mb-5">
                 <input type="number" name="amount" class="form-control bg-dark text-white border-secondary" placeholder="Teklifinizi yazın..." required>
                 <button type="submit" class="btn btn-success px-4 fw-bold">Teklif Ver</button>
             </form>
+
+            <!-- Satışı Kapat (sadece sahibi) -->
+            <form th:if="${!item.isSold and item.currentHighestBid != null and item.owner.username == currentUser.username}"
+                  th:action="@{'/items/close/' + ${item.id}}" method="post" class="mb-4">
+                <button type="submit" class="btn btn-warning fw-bold">Satışı Tamamla (%10 komisyon)</button>
+            </form>
+
+            <!-- Teklif Geçmişi -->
+            <div th:if="${!bids.isEmpty()}" class="mb-4">
+                <h6 class="text-success fw-bold">Teklif Geçmişi</h6>
+                <ul class="list-group list-group-flush">
+                    <li th:each="b : ${bids}" class="list-group-item bg-transparent text-light d-flex justify-content-between">
+                        <span th:text="${b.bidder.username}"></span>
+                        <span th:text="${b.amount} + ' ₺'"></span>
+                    </li>
+                </ul>
+            </div>
 
             <div class="card bg-dark border-secondary p-3 rounded-4">
                 <div class="d-flex align-items-center">
                     <div class="bg-success rounded-circle me-3" style="width: 50px; height: 50px;"></div>
                     <div>
                         <a th:href="@{'/profile/' + ${item.owner.username}}" class="text-white fw-bold text-decoration-none" th:text="${item.owner.username}"></a>
-                        <p class="text-muted small mb-0" th:text="${item.owner.email}"></p>
                     </div>
                 </div>
             </div>

@@ -11,21 +11,9 @@
 	<groupId>com.koleksiyon</groupId>
 	<artifactId>envanter</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>envanter</name>
-	<description>envanter</description>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<name>koleksiyon-agi</name>
+	<description>Koleksiyonerler için sosyal ağ ve açık artırma pazarı (Spring Boot + PostgreSQL)</description>
+	<url>https://github.com/MelihAliCagman/KoleksiyonAgi</url>
 	<properties>
 		<java.version>17</java.version>
 	</properties>

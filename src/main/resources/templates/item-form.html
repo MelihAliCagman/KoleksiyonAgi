@@ -24,7 +24,7 @@
                 <li class="nav-item me-3" th:if="${currentUser != null and currentUser.role == 'ROLE_ADMIN'}">
                     <a class="btn btn-warning btn-sm fw-bold text-dark" th:href="@{/admin/dashboard}">💰 Kasa</a>
                 </li>
-                <li class="nav-item"><a class="btn btn-danger btn-sm" th:href="@{'/login?logout'}">Çıkış</a></li>
+                <li class="nav-item"><form th:action="@{/logout}" method="post" class="d-inline"><button type="submit" class="btn btn-danger btn-sm">Çıkış</button></form></li>
             </ul>
         </div>
     </div>
